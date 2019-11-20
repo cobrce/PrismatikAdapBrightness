@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29509.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrismatikAdapBrightness", "PrismatikAdapBrightness\PrismatikAdapBrightness.csproj", "{0C0EC24B-5BBD-4833-B577-EBFFA6595DDA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0C0EC24B-5BBD-4833-B577-EBFFA6595DDA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C0EC24B-5BBD-4833-B577-EBFFA6595DDA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C0EC24B-5BBD-4833-B577-EBFFA6595DDA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C0EC24B-5BBD-4833-B577-EBFFA6595DDA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CB0FC539-E9CD-4755-8176-9E42FBE381E1}
+	EndGlobalSection
+EndGlobal
