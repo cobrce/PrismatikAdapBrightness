@@ -15,8 +15,10 @@ namespace PrismatikAdapBrightness
 		private readonly SerialPort port;
 		private readonly Socket socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
 
+		internal event EventHandler<int> BrightnessUpdateHandler;
+
 		private int? DesiredBrightness = null;
-		private int CurrentBrightness = 25;
+		private int currentBrightness = 25;
 
 		public BrightnessAdapter(Config portconfig)
 		{
@@ -28,6 +30,14 @@ namespace PrismatikAdapBrightness
 			GetBrightness();
 
 			port.Open();
+		}
+
+		internal void Stop()
+		{
+			port.DataReceived -= Port_DataReceived;
+			port.DiscardInBuffer();
+			port.Close();
+			socket.Close();
 		}
 
 		private bool Connect()
@@ -44,6 +54,9 @@ namespace PrismatikAdapBrightness
 			return true;
 		}
 		long? LastUpdated = null;
+
+		public int CurrentBrightness { get => currentBrightness; private set => currentBrightness = value; }
+
 		private void Port_DataReceived(object sender, SerialDataReceivedEventArgs e)
 		{
 			var data = port.ReadLine();
@@ -82,7 +95,7 @@ namespace PrismatikAdapBrightness
 
 		private int ConvertAnalogValue(int value)
 		{
-			const int minAnalog = 20; 
+			const int minAnalog = 100; 
 			const int maxAnalog = 900;
 			const int maxBrightness = 100;
 			const int minBrightness = 20;
@@ -95,9 +108,9 @@ namespace PrismatikAdapBrightness
 
 		private void GetBrightness()
 		{
-			byte[] buffer = new byte[100];
 
 			if (!Connect()) return;
+			byte[] buffer = new byte[100];
 
 			socket.Send("getbrightness\n");
 			Thread.Sleep(10);
@@ -125,6 +138,8 @@ namespace PrismatikAdapBrightness
 
 		private void SetBrightNess(int value)
 		{
+			BrightnessUpdateHandler?.Invoke(this,value);
+
 			byte[] buffer = new byte[1000];
 			if (!Connect()) return;
 

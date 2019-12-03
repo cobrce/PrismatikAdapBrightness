@@ -10,7 +10,7 @@ namespace PrismatikAdapBrightness
 {
 	static class Program
 	{
-		
+
 
 		/// <summary>
 		///  The main entry point for the application.
@@ -21,7 +21,7 @@ namespace PrismatikAdapBrightness
 			Application.SetHighDpiMode(HighDpiMode.SystemAware);
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
-			new BrightnessAdapter(SolvePort()).Loop();
+			Application.Run(new Form2(SolvePort()));
 		}
 
 		private static Config SolvePort()
@@ -29,16 +29,13 @@ namespace PrismatikAdapBrightness
 			var config = Config.Load();
 			if (config != null)
 				return config;
-			using (var form = new Form1())
-			{
-				if (form.ShowDialog() == DialogResult.OK)
-				{
-					form.Config.Save();
-					return form.Config;
-				}
-			}
-			Environment.Exit(0);
+
+			if(Form1.GetConfig(null) is Config cfg)
+				return cfg;
+			else
+				Environment.Exit(0);
 			return null;
 		}
+
 	}
 }
