@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PrismatikAdapBrightness.Correctors;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -39,10 +40,18 @@ namespace PrismatikAdapBrightness
 
 		private void CreateAdapter()
 		{
-			adapter = new BrightnessAdapter(config);
-			SetText(txtBrightness, adapter.CurrentBrightness.ToString());
-			UpdateNotifyIcon(adapter.CurrentBrightness);
-			adapter.BrightnessUpdateHandler += Adapter_BrightnessUpdateHandler;
+			try
+			{
+				adapter = new BrightnessAdapter(config);
+				SetText(txtBrightness, adapter.CurrentBrightness.ToString());
+				UpdateNotifyIcon(adapter.CurrentBrightness);
+				adapter.BrightnessUpdateHandler += Adapter_BrightnessUpdateHandler;
+			}
+			catch (TimeoutException)
+			{
+				MessageBox.Show("Cannot connect to Prismatik : LightPack API Server\n" +
+					"Make sure it's enabled and using port 3636");
+			}
 		}
 
 		private void DisplayCfg()

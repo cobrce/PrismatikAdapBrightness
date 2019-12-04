@@ -3,11 +3,13 @@ using System.Collections;
 using System.IO;
 using System.IO.Ports;
 using System.Text.Json;
+using static PrismatikAdapBrightness.Correctors.AbstractCorrector;
 
 namespace PrismatikAdapBrightness
 {
 	internal class Config
 	{
+		
 		private static string ConfigFileName
 		{
 			get => Path.Combine(
@@ -17,9 +19,12 @@ namespace PrismatikAdapBrightness
 		public string Port { get => port; set => port = value; }
 		public int Bauderate { get => baudeRate; set => baudeRate = value; }
 
+		public CorrectorTypeEnum CorrectorType { get => correctorType; set => correctorType = value; }
+
 		private string port;
 		private int baudeRate;
-		
+		private CorrectorTypeEnum correctorType;
+
 		internal void Save()
 		{
 			File.WriteAllText(ConfigFileName, JsonSerializer.Serialize<Config>(this));

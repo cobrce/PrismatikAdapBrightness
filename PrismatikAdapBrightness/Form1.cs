@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static PrismatikAdapBrightness.Correctors.AbstractCorrector;
 
 namespace PrismatikAdapBrightness
 {
@@ -30,6 +31,16 @@ namespace PrismatikAdapBrightness
 			InitializeComponent();
 			Config = previous;
 			DialogResult = DialogResult.Cancel;
+
+			switch (previous.CorrectorType)
+			{
+				case CorrectorTypeEnum.Smooth:
+					radioSm.Checked = true;
+					break;
+				default:
+					radioTh.Checked = true;
+					break;
+			}
 		}
 
 		internal Config Config { get; private set; }
@@ -81,7 +92,8 @@ namespace PrismatikAdapBrightness
 				var config = new Config()
 				{
 					Port = pnd.Port,
-					Bauderate = bauderate
+					Bauderate = bauderate,
+					CorrectorType = radioSm.Checked? CorrectorTypeEnum.Smooth : CorrectorTypeEnum.Threshold,
 				};
 
 				if (config.CheckPort())

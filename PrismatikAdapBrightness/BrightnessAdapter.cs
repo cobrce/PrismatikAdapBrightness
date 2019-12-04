@@ -6,6 +6,7 @@ using System.Text;
 using System.Net.Sockets;
 using System.Threading;
 using System.Diagnostics;
+using PrismatikAdapBrightness.Correctors;
 
 namespace PrismatikAdapBrightness
 {
@@ -17,27 +18,65 @@ namespace PrismatikAdapBrightness
 
 		internal event EventHandler<int> BrightnessUpdateHandler;
 
-		private int? DesiredBrightness = null;
-		private int currentBrightness = 25;
+		
+
+		readonly ICorrector corrector;
 
 		public BrightnessAdapter(Config portconfig)
 		{
+			for (int _ = 0; _ < 10; _++)
+				if (Connect())
+					break;
+				else
+					Thread.Sleep(500);
+
+			if (!socket.Connected)
+				throw new TimeoutException();
+
+			GetBrightness();
+
 			config = portconfig;
 			port = new SerialPort(config.Port, config.Bauderate);
 			port.DataReceived += Port_DataReceived;
-
-			while (!Connect()) { Thread.Sleep(500); }
-			GetBrightness();
-
 			port.Open();
+
+			corrector = AbstractCorrector.CreateCorrector(config.CorrectorType);
+			corrector.Corrected += Corrector_Corrected;
+			corrector.Start(CurrentBrightness);
+		}
+
+		private void Corrector_Corrected(int brightness)
+		{
+			currentBrightness = brightness;
+			SetBrightNess(brightness);
 		}
 
 		internal void Stop()
 		{
+			corrector.Stop();
 			port.DataReceived -= Port_DataReceived;
-			port.DiscardInBuffer();
-			port.Close();
+			if (port.IsOpen)
+			{
+				port.DiscardInBuffer();
+				port.Close();
+			}
 			socket.Close();
+		}
+
+		private int currentBrightness;
+		public int CurrentBrightness { get => currentBrightness; private set => currentBrightness = value; }
+
+		private void Port_DataReceived(object sender, SerialDataReceivedEventArgs e)
+		{
+			var data = port.ReadLine();
+			if (int.TryParse(data, out int value))
+			{
+				if (value > 1024) value = 1024;
+				else if (value < 0) value = 0;
+
+				value = ConvertAnalogValue(value);
+				corrector.Update(value);
+			}
 		}
 
 		private bool Connect()
@@ -53,39 +92,6 @@ namespace PrismatikAdapBrightness
 			}
 			return true;
 		}
-		long? LastUpdated = null;
-
-		public int CurrentBrightness { get => currentBrightness; private set => currentBrightness = value; }
-
-		private void Port_DataReceived(object sender, SerialDataReceivedEventArgs e)
-		{
-			var data = port.ReadLine();
-			if (int.TryParse(data, out int value))
-			{
-				if (value > 1024) value = 1024;
-				else if (value < 0) value = 0;
-
-				value = ConvertAnalogValue(value);
-				DesiredBrightness = value;
-#if (DIRECT_UPDATE)
-
-				if (Math.Abs(value - CurrentBrightness) >= 10)
-				{
-					long now = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
-
-					if (LastUpdated != null && (now - LastUpdated.Value) < 500) // value isn't stable for 500ms
-					{
-						LastUpdated = now;
-					}
-					else
-					{
-						CurrentBrightness = value;
-						SetBrightNess(value);
-					}
-				}
-#endif
-			}
-		}
 
 		int Map(int value, int minIn, int maxIn, int minOut, int maxOut)
 		{
@@ -95,7 +101,7 @@ namespace PrismatikAdapBrightness
 
 		private int ConvertAnalogValue(int value)
 		{
-			const int minAnalog = 100; 
+			const int minAnalog = 100;
 			const int maxAnalog = 900;
 			const int maxBrightness = 100;
 			const int minBrightness = 20;
@@ -122,23 +128,10 @@ namespace PrismatikAdapBrightness
 				CurrentBrightness = brightness;
 			}
 		}
-
-		private void UpdateBrightness()
-		{
-			if (DesiredBrightness == null || DesiredBrightness.Value == CurrentBrightness) return;
-
-			int Delta = (DesiredBrightness.Value - CurrentBrightness) / 2;
-			if (Delta == 0)
-				Delta = DesiredBrightness.Value - CurrentBrightness;
-
-			CurrentBrightness += Delta;
-
-			SetBrightNess(CurrentBrightness);
-		}
-
+		
 		private void SetBrightNess(int value)
 		{
-			BrightnessUpdateHandler?.Invoke(this,value);
+			BrightnessUpdateHandler?.Invoke(this, value);
 
 			byte[] buffer = new byte[1000];
 			if (!Connect()) return;
@@ -154,15 +147,15 @@ namespace PrismatikAdapBrightness
 			socket.Receive(buffer);
 		}
 
-		internal void Loop()
-		{
-			while (true)
-			{
-				Thread.Sleep(1);
-#if (!DIRECT_UPDATE)
-				UpdateBrightness();
-#endif
-			}
-		}
+		//		internal void Loop()
+		//		{
+		//			while (true)
+		//			{
+		//				Thread.Sleep(1);
+		//#if (!DIRECT_UPDATE)
+		//				UpdateBrightness();
+		//#endif
+		//			}
+		//		}
 	}
 }
